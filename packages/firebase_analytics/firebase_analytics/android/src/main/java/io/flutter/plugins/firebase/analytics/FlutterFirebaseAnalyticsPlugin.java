@@ -7,6 +7,8 @@ package io.flutter.plugins.firebase.analytics;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.TaskCompletionSource;
@@ -21,6 +23,7 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugins.firebase.core.FlutterFirebasePlugin;
 import io.flutter.plugins.firebase.core.FlutterFirebasePluginRegistry;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,12 +35,22 @@ public class FlutterFirebaseAnalyticsPlugin
   private FirebaseAnalytics analytics;
   private MethodChannel channel;
 
+  private Context context;
+
   private void initInstance(BinaryMessenger messenger, Context context) {
-    analytics = FirebaseAnalytics.getInstance(context);
+//    analytics = FirebaseAnalytics.getInstance(context);
+    this.context = context;
     String channelName = "plugins.flutter.io/firebase_analytics";
     channel = new MethodChannel(messenger, channelName);
     channel.setMethodCallHandler(this);
     FlutterFirebasePluginRegistry.registerPlugin(channelName, this);
+  }
+
+  private void initFirebaseAnalytics() {
+    if (this.context != null && this.analytics == null) {
+      Log.i("FireBase", "初始化 FirebaseAnalytics");
+      analytics = FirebaseAnalytics.getInstance(this.context);
+    }
   }
 
   @SuppressWarnings("unchecked")
@@ -199,6 +212,7 @@ public class FlutterFirebaseAnalyticsPlugin
     cachedThreadPool.execute(
         () -> {
           try {
+            initFirebaseAnalytics();
             final Boolean enabled =
                 (Boolean) Objects.requireNonNull(arguments.get(Constants.ENABLED));
             analytics.setAnalyticsCollectionEnabled(enabled);
